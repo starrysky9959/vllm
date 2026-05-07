@@ -139,6 +139,12 @@ KVConnectorFactory.register_connector(
 )
 
 KVConnectorFactory.register_connector(
+    "EloqStoreConnector",
+    "vllm.distributed.kv_transfer.kv_connector.v1.eloqstore_connector",
+    "EloqStoreConnector",
+)
+
+KVConnectorFactory.register_connector(
     "ExampleHiddenStatesConnector",
     "vllm.distributed.kv_transfer.kv_connector.v1.example_hidden_states_connector",
     "ExampleHiddenStatesConnector",
