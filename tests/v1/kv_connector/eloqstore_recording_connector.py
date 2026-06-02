@@ -16,6 +16,12 @@ class RecordingEloqStoreConnector(EloqStoreConnector):
             vllm_config.kv_transfer_config.kv_connector_extra_config["event_file"]
         )
         self._role_name = role.name
+        self._log(
+            "init "
+            f"table={self._table_name} "
+            f"layers={len(self._layer_order)} "
+            f"has_kv_cache_config={kv_cache_config is not None}"
+        )
 
     def _log(self, message: str) -> None:
         with open(self._event_file, "a", encoding="utf-8") as f:
@@ -44,9 +50,15 @@ class RecordingEloqStoreConnector(EloqStoreConnector):
         attn_metadata,
         **kwargs: Any,
     ) -> None:
-        self._log(f"save_kv_layer {layer_name}")
+        self._log(
+            f"save_kv_layer {layer_name} shape={tuple(kv_layer.shape)} "
+            f"registered_layers={sorted(self._registered_kv_caches.keys())}"
+        )
         return super().save_kv_layer(layer_name, kv_layer, attn_metadata, **kwargs)
 
     def wait_for_save(self) -> None:
-        self._log("wait_for_save")
+        pending = {
+            key: payload.payload_bytes for key, payload in self._pending_save_blocks.items()
+        }
+        self._log(f"wait_for_save pending={pending}")
         return super().wait_for_save()

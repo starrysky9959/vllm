@@ -8,6 +8,7 @@ import torch
 
 from vllm.config import VllmConfig
 from vllm.logger import init_logger
+from vllm.platforms.interface import in_wsl
 from vllm.utils.platform_utils import is_pin_memory_available
 from vllm.v1.simple_kv_offload.copy_backend import DmaCopyBackend
 from vllm.v1.simple_kv_offload.cuda_mem_ops import pin_tensor
@@ -150,6 +151,12 @@ class SimpleCPUOffloadWorker:
         )
 
         pin_memory = is_pin_memory_available()
+        if pin_memory and in_wsl():
+            logger.warning(
+                "Disabling pinned CPU KV offload buffers on WSL to avoid "
+                "unstable CUDA batch memcpy behavior."
+            )
+            pin_memory = False
         if not pin_memory:
             logger.warning(
                 "Pinned memory not available. CPU offload performance may be degraded."

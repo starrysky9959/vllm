@@ -35,6 +35,15 @@ def in_wsl() -> bool:
     return "microsoft" in " ".join(platform.uname()).lower()
 
 
+def _probe_pin_memory_available() -> bool:
+    try:
+        tensor = torch.empty(1, dtype=torch.uint8, device="cpu", pin_memory=True)
+        del tensor
+        return True
+    except Exception:
+        return False
+
+
 class PlatformEnum(enum.Enum):
     """Enumeration of supported hardware platforms."""
 
@@ -724,11 +733,18 @@ class Platform:
     def is_pin_memory_available(cls) -> bool:
         """Checks whether pin memory is available on the current platform."""
         if in_wsl():
-            # Pinning memory in WSL is not supported.
-            # https://docs.nvidia.com/cuda/wsl-user-guide/index.html#known-limitations-for-linux-cuda-applications
+            # Some WSL environments still expose usable pinned memory. Probe the
+            # runtime directly instead of hard-disabling UVA and all pinned-memory
+            # paths based only on the kernel string.
+            if _probe_pin_memory_available():
+                logger.warning(
+                    "WSL is detected, but pinned memory allocation succeeded. "
+                    "Continuing with pin_memory=True."
+                )
+                return True
             logger.warning(
-                "Using 'pin_memory=False' as WSL is detected. "
-                "This may slow down the performance."
+                "Using 'pin_memory=False' as WSL is detected and pinned memory "
+                "allocation probe failed. This may slow down the performance."
             )
             return False
         return True

@@ -48,10 +48,12 @@ def test_eloqstore_connector_end_to_end():
             kv_role="kv_both",
             kv_connector_extra_config={
                 "store_paths": [str(store_dir)],
-                "table_name": "vllm_e2e",
                 "partition_id": 0,
-                "num_threads": 1,
-                "io_workers": 2,
+                "num_threads": 2,
+                "num_partitions": 4,
+                "shared_memory_bytes": 64 << 20,
+                "shared_memory_slot_size": 4 << 20,
+                "shared_memory_slot_count": 16,
                 "event_file": str(event_file),
             },
         )

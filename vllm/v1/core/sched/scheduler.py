@@ -1303,10 +1303,12 @@ class Scheduler(SchedulerInterface):
         kv_connector_stats: KVConnectorStats | None = (
             kv_connector_output.kv_connector_stats if kv_connector_output else None
         )
-        if kv_connector_stats and self.connector:
-            kv_stats = self.connector.get_kv_connector_stats()
-            if kv_stats:
-                kv_connector_stats = kv_connector_stats.aggregate(kv_stats)
+        if self.connector:
+            scheduler_kv_stats = self.connector.get_kv_connector_stats()
+            if kv_connector_stats and scheduler_kv_stats:
+                kv_connector_stats = kv_connector_stats.aggregate(scheduler_kv_stats)
+            elif scheduler_kv_stats:
+                kv_connector_stats = scheduler_kv_stats
 
         failed_kv_load_req_ids = None
         if kv_connector_output and kv_connector_output.invalid_block_ids:
